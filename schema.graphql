@@ -1,0 +1,10 @@
+type USDT0Transfer {
+  id: ID! # use guid
+  srcChain: Int!
+  dstChain: Int!
+  fromAddress: String!
+  toAddress: String!
+  amountSent: Float!
+  amountReceived: Float!
+}
+

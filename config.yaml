@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: usdt0-indexer
+networks:
+- id: 1
+  start_block: 0
+  contracts:
+  - name: USDT0
+    address:
+    - 0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee
+    handler: src/EventHandlers.ts
+    events:
+    - event: OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)
+    - event: OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)
+unordered_multichain_mode: true
+preload_handlers: true
