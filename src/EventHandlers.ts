@@ -33,28 +33,80 @@ const EID_TO_CHAIN_ID: Record<number, number> = {
   30396: 988,
 };
 
+function getEidFromChainId(chainId: number): number | undefined {
+  return Object.entries(EID_TO_CHAIN_ID)
+    .find(([, value]) => value === chainId)
+    ?.at(0)
+    ? Number(
+        Object.entries(EID_TO_CHAIN_ID).find(
+          ([, value]) => value === chainId
+        )![0]
+      )
+    : undefined;
+}
+
+function startOfDayUTC(timestamp: number): number {
+  const date = new Date(timestamp * 1000);
+
+  date.setUTCHours(0, 0, 0, 0);
+
+  return Math.floor(date.getTime() / 1000);
+}
+
 USDT0.OFTReceived.handler(async ({ event, context }) => {
   // getOrCreate a USDT0Transfer entity
   let transfer: USDT0Transfer = await context.USDT0Transfer.getOrCreate({
     id: event.params.guid,
     srcChain: 0,
     dstChain: 0,
-    fromAddress: ZERO_ADDRESS,
+    fromAddress: ZERO_ADDRESS, // will be set in OFTSent event
     toAddress: ZERO_ADDRESS,
     amountSent: 0,
     amountReceived: 0,
   });
 
+  // Note: As our current indexer is single-chain, there can be USDT0Transfer entities
+  // that have fromAddress as ZERO_ADDRESS. This will be fixed when multi-chain support is added
+  // along with support for all chains that USDT0 is deployed on.
+
   transfer = {
     ...transfer,
-    // set chains in OFTSent event
+    srcChain:
+      transfer.srcChain == 0 ? EID_TO_CHAIN_ID[Number(event.params.srcEid)] : transfer.srcChain,
+
+    dstChain: transfer.dstChain == 0 ? event.chainId : transfer.dstChain,
+
     toAddress: event.params.toAddress,
+    amountReceived: bigIntToDecimal(event.params.amountReceivedLD, 6),
   };
 
   // TODO: check received amount is same as received amount from OFTSent event
 
   // set that entity
   context.USDT0Transfer.set(transfer);
+
+  const startOfDayTS = startOfDayUTC(event.block.timestamp);
+  let dailySnapshotId = `${transfer.dstChain}-${transfer.srcChain}-${startOfDayTS}`;
+
+  let dailyStats = await context.dailyUSDT0TransferStats.getOrCreate({
+    id: dailySnapshotId,
+    srcChain: transfer.srcChain,
+    dstChain: transfer.dstChain,
+    date: startOfDayTS,
+    totalSentTransfers: 0,
+    totalReceivedTransfers: 0,
+    totalAmountSent: 0,
+    totalAmountReceived: 0,
+  });
+
+  dailyStats = {
+    ...dailyStats,
+    totalReceivedTransfers: dailyStats.totalReceivedTransfers + 1,
+    totalAmountReceived:
+      dailyStats.totalAmountReceived + transfer.amountReceived,
+  };
+
+  context.dailyUSDT0TransferStats.set(dailyStats);
 });
 
 USDT0.OFTSent.handler(async ({ event, context }) => {
@@ -69,13 +121,11 @@ USDT0.OFTSent.handler(async ({ event, context }) => {
     amountReceived: 0,
   });
 
-  let amountSent = event.params.amountSentLD;
-
   transfer = {
     ...transfer,
     // set chains in OFTSent event
-    srcChain: EID_TO_CHAIN_ID[event.chainId] || 0,
-    dstChain: EID_TO_CHAIN_ID[Number(event.params.dstEid)] || 0,
+    srcChain: event.chainId ,
+    dstChain: EID_TO_CHAIN_ID[Number(event.params.dstEid)],
     fromAddress: event.params.fromAddress,
     amountSent: bigIntToDecimal(event.params.amountSentLD, 6),
     amountReceived: bigIntToDecimal(event.params.amountSentLD, 6),
@@ -83,4 +133,27 @@ USDT0.OFTSent.handler(async ({ event, context }) => {
 
   // update amountReceived
   context.USDT0Transfer.set(transfer);
+
+  // TODO: update dailyUSDT0TransferStats entity
+  const startOfDayTS = startOfDayUTC(event.block.timestamp);
+  let dailySnapshotId = `${transfer.srcChain}-${transfer.dstChain}-${startOfDayTS}`;
+
+  let dailyStats = await context.dailyUSDT0TransferStats.getOrCreate({
+    id: dailySnapshotId,
+    srcChain: transfer.srcChain,
+    dstChain: transfer.dstChain,
+    date: startOfDayTS,
+    totalSentTransfers: 0,
+    totalReceivedTransfers: 0,
+    totalAmountSent: 0,
+    totalAmountReceived: 0,
+  });
+
+  dailyStats = {
+    ...dailyStats,
+    totalSentTransfers: dailyStats.totalSentTransfers + 1,
+    totalAmountSent: dailyStats.totalAmountSent + transfer.amountSent,
+  };
+
+  context.dailyUSDT0TransferStats.set(dailyStats);
 });

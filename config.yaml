@@ -2,7 +2,7 @@
 name: usdt0-indexer
 networks:
 - id: 1
-  start_block: 0
+  start_block: 23997148
   contracts:
   - name: USDT0
     address:

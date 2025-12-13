@@ -8,3 +8,14 @@ type USDT0Transfer {
   amountReceived: Float!
 }
 
+type dailyUSDT0TransferStats {
+  id: ID! # srcChainId-dstChainId-unixTimestamp
+  srcChain: Int!
+  dstChain: Int!
+  date: Int! # unix timestamp at 00:00 UTC
+  totalSentTransfers: Int!
+  totalReceivedTransfers: Int!
+  totalAmountSent: Float!
+  totalAmountReceived: Float!
+}
+
