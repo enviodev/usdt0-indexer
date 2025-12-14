@@ -63,6 +63,8 @@ USDT0.OFTReceived.handler(async ({ event, context }) => {
     toAddress: ZERO_ADDRESS,
     amountSent: 0,
     amountReceived: 0,
+    txHashReceived: "",
+    txHashSent: "",
   });
 
   // Note: As our current indexer is single-chain, there can be USDT0Transfer entities
@@ -78,6 +80,7 @@ USDT0.OFTReceived.handler(async ({ event, context }) => {
 
     toAddress: event.params.toAddress,
     amountReceived: bigIntToDecimal(event.params.amountReceivedLD, 6),
+    txHashReceived: event.transaction.hash,
   };
 
   // TODO: check received amount is same as received amount from OFTSent event
@@ -86,12 +89,10 @@ USDT0.OFTReceived.handler(async ({ event, context }) => {
   context.USDT0Transfer.set(transfer);
 
   const startOfDayTS = startOfDayUTC(event.block.timestamp);
-  let dailySnapshotId = `${transfer.dstChain}-${transfer.srcChain}-${startOfDayTS}`;
+  let dailySnapshotId = `${transfer.srcChain}-${startOfDayTS}`;
 
   let dailyStats = await context.dailyUSDT0TransferStats.getOrCreate({
     id: dailySnapshotId,
-    srcChain: transfer.srcChain,
-    dstChain: transfer.dstChain,
     date: startOfDayTS,
     totalSentTransfers: 0,
     totalReceivedTransfers: 0,
@@ -119,6 +120,8 @@ USDT0.OFTSent.handler(async ({ event, context }) => {
     toAddress: ZERO_ADDRESS,
     amountSent: 0,
     amountReceived: 0,
+    txHashReceived: "",
+    txHashSent: "",
   });
 
   transfer = {
@@ -129,6 +132,7 @@ USDT0.OFTSent.handler(async ({ event, context }) => {
     fromAddress: event.params.fromAddress,
     amountSent: bigIntToDecimal(event.params.amountSentLD, 6),
     amountReceived: bigIntToDecimal(event.params.amountSentLD, 6),
+    txHashSent: event.transaction.hash,
   };
 
   // update amountReceived
@@ -136,12 +140,10 @@ USDT0.OFTSent.handler(async ({ event, context }) => {
 
   // TODO: update dailyUSDT0TransferStats entity
   const startOfDayTS = startOfDayUTC(event.block.timestamp);
-  let dailySnapshotId = `${transfer.srcChain}-${transfer.dstChain}-${startOfDayTS}`;
+  let dailySnapshotId = `${transfer.dstChain}-${startOfDayTS}`;
 
   let dailyStats = await context.dailyUSDT0TransferStats.getOrCreate({
     id: dailySnapshotId,
-    srcChain: transfer.srcChain,
-    dstChain: transfer.dstChain,
     date: startOfDayTS,
     totalSentTransfers: 0,
     totalReceivedTransfers: 0,

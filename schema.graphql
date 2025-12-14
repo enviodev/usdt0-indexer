@@ -6,16 +6,27 @@ type USDT0Transfer {
   toAddress: String!
   amountSent: Float!
   amountReceived: Float!
+  txHashSent: String!
+  txHashReceived: String!
 }
 
+# lets call this chain as primary
 type dailyUSDT0TransferStats {
-  id: ID! # srcChainId-dstChainId-unixTimestamp
-  srcChain: Int!
-  dstChain: Int!
+  id: ID! # chainId-unixTimestamp
   date: Int! # unix timestamp at 00:00 UTC
   totalSentTransfers: Int!
   totalReceivedTransfers: Int!
   totalAmountSent: Float!
   totalAmountReceived: Float!
+  # statsByChain: [StatsByChain!]!
+}
+
+type StatsByChain {
+  id: ID! # primary-secondary-timestamp
+  chainId: Int!
+  sentCount: Int!
+  amountSent: Float!
+  receivecCount: Int!
+  amountReceived: Float!
 }
 

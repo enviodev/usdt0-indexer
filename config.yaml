@@ -10,6 +10,12 @@ networks:
     handler: src/EventHandlers.ts
     events:
     - event: OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)
+      field_selection:
+        transaction_fields:
+          - hash
     - event: OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)
+      field_selection:
+        transaction_fields:
+          - hash
 unordered_multichain_mode: true
 preload_handlers: true
