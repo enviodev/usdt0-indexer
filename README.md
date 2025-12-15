@@ -1,4 +1,4 @@
-# USDT0 Indexer (WIP)
+# USDT0 Indexer
 
 *For a complete overview of all Envio indexer features, please visit the [Envio documentation](https://docs.envio.dev).*
 
