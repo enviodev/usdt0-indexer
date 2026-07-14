@@ -1,8 +1,5 @@
 import assert from "assert";
-import { 
-  TestHelpers,
-  TransparentUpgradeableProxy_OFTReceived
-} from "generated";
+import { TestHelpers, TransparentUpgradeableProxy_OFTReceived } from "envio";
 const { MockDb, TransparentUpgradeableProxy } = TestHelpers;
 
 describe("TransparentUpgradeableProxy contract OFTReceived event tests", () => {

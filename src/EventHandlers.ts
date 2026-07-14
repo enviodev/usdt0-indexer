@@ -1,7 +1,8 @@
+import { indexer } from "envio";
 /*
  * Please refer to https://docs.envio.dev for a thorough guide on all Envio indexer features
  */
-import { USDT0, USDT0Transfer } from "generated";
+import { USDT0, USDT0Transfer } from "envio";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -53,7 +54,9 @@ function startOfDayUTC(timestamp: number): number {
   return Math.floor(date.getTime() / 1000);
 }
 
-USDT0.OFTReceived.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "USDT0", event: "OFTReceived" },
+  async ({ event, context }) => {
   // getOrCreate a USDT0Transfer entity
   let transfer: USDT0Transfer = await context.USDT0Transfer.getOrCreate({
     id: event.params.guid,
@@ -108,9 +111,12 @@ USDT0.OFTReceived.handler(async ({ event, context }) => {
   };
 
   context.dailyUSDT0TransferStats.set(dailyStats);
-});
+}
+);
 
-USDT0.OFTSent.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "USDT0", event: "OFTSent" },
+  async ({ event, context }) => {
   // getOrCreate the USDT0Transfer entity
   let transfer: USDT0Transfer = await context.USDT0Transfer.getOrCreate({
     id: event.params.guid,
@@ -158,4 +164,5 @@ USDT0.OFTSent.handler(async ({ event, context }) => {
   };
 
   context.dailyUSDT0TransferStats.set(dailyStats);
-});
+}
+);
